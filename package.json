@@ -1,0 +1,2 @@
+{"name":"codigo-master","version":"1.0.0","private":true,"scripts":{"prep":"mkdir -p www && cp -r index.html manifest.json sw.js icons www/"},
+"dependencies":{"@capacitor/android":"^6.1.2","@capacitor/core":"^6.1.2"},"devDependencies":{"@capacitor/cli":"^6.1.2"}}

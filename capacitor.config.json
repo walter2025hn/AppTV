@@ -1,0 +1,1 @@
+{"appId":"com.codigomaster.app","appName":"Código Master","webDir":"www","server":{"androidScheme":"https","cleartext":true},"plugins":{"CapacitorHttp":{"enabled":true}},"android":{"allowMixedContent":true}}
