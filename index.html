@@ -35,6 +35,7 @@ input{background:var(--card);border:2px solid transparent;border-radius:999px;pa
 #pl video{width:100%;height:100%;background:#000}
 #pl .t{position:absolute;top:10px;left:10px;display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.6);padding:6px 10px;border-radius:999px;font-size:14px}
 #pl button{background:var(--ac);color:#111;border:2px solid transparent;border-radius:999px;padding:6px 14px;font-weight:700}
+#ky{background:var(--card);border:2px solid transparent;border-radius:999px;padding:8px 14px;cursor:pointer}select{background:var(--card);color:var(--tx);border:2px solid transparent;border-radius:999px;padding:8px 12px;max-width:44vw}[hidden]{display:none!important}#sb{margin:6px auto}
 @media(min-width:1000px){#grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}body{font-size:18px}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important}}
 </style></head><body>
@@ -47,53 +48,105 @@ input{background:var(--card);border:2px solid transparent;border-radius:999px;pa
 <h1>CÓDIGO <span>MASTER</span></h1></div>
 <header><b>🦅 Código Master</b>
 <nav><button data-k="tv" class="on">TV</button><button data-k="movie">Películas</button><button data-k="series">Series</button></nav>
-<input id="q" placeholder="Buscar…" type="search"></header>
-<div id="msg">Cargando lista…</div><div id="grid"></div><button class="more" id="more" hidden>Ver más</button>
+<input id="q" placeholder="Buscar…" type="search"><select id="gr"></select><button id="ky" title="Carátulas">🖼️</button></header>
+<button class="more" id="sb" hidden></button><div id="msg">Cargando lista…</div><div id="grid"></div><button class="more" id="more" hidden>Ver más</button>
 <div id="pl"><video id="v" controls autoplay playsinline></video>
-<div class="t"><button id="bk">← Volver</button><button id="en">Motor</button><span id="nm"></span></div></div>
+<div id="er" style="position:absolute;bottom:24px;left:0;right:0;text-align:center;color:#ffb4b4;padding:10px"></div><div class="t"><button id="bk">← Volver</button><button id="en">Motor</button><span id="nm"></span></div></div>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.js"></script>
 <script>
 const LIST='https://tinyurl.com/codesmaster',PAGE=120;
 let all=[],tab='tv',shown=0,cur=[],eng=null,engI=0,item=null;
 const $=s=>document.querySelector(s),grid=$('#grid');
-const kind=g=>/serie|season|temporada|novela/i.test(g)?'series':/pel[ií]cula|movie|vod|cine|film/i.test(g)?'movie':'tv';
+const MOV=/pel[ií]cula|saga|marvel|rambo|rocky|harry potter|james bond|r[aá]pido y furioso|piratas|star wars|cantinflas|seagal|van damme|chuck norris|jackie chan|bud spencer|duro de matar|hombres de negro|xxx|adam sandler|beethoven|kung fu panda|halloween|viernes 13|elm street|chucky|destino final|magn[ií]ficos|dinosaurios|princesas|barbie|super mario/i;
+const ADULT=/^(anal|blowjob|big (ass|dick|tits)|cuckold|gangbang|hardcore|fetish|compilation|blonde|brunette|asian|gay|bitme|fap tv)\b/i;
+/*H*/const EP=/S\d{1,2}\s*E\d{1,3}|\b\d{1,2}x\d{1,3}\b/i,EP1=/^(.*?)[\s\-–:]*S(\d{1,2})\s*E(\d{1,3})/i,EP2=/^(.*?)[\s\-–:]*(\d{1,2})x(\d{1,3})\b/i,H24=/^24[ \/]?7/;
+const kind=(g,n,u)=>{u=u||'';
+if(/\/series\//i.test(u))return'series';if(/\/movie\//i.test(u))return'movie';
+if(EP.test(n))return'series';
+if(/serie|season|temporada|novela/i.test(g))return'series';
+if(/pel[ií]cula|movie|vod|film/i.test(g))return'movie';
+if(H24.test(n))return MOV.test(n)?'movie':'series';
+if(/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u))return'movie';
+return'tv'};
+const TOP=[[/deport|sport|espn|\$|tudn|dego|nfl|nba|\bf1\b|fut |tyc|tsn|baseball|boxing|golf|tennis|vtv|garage|gol\b/i,'Deportes'],[/cine|hbo|cinemax|axn|amc|tnt|star channel|space|paramount|sony|warner|universal|golden|\bfx|tcm|a&e|estudio/i,'Cine y entretenimiento'],[/cartoon|disney|nick|baby|kids|infantil|junior|cartoonito/i,'Infantil'],[/news|noticias|cnn|bbc|\bdw\b|24 horas|ntn|c5n|a24|cronica/i,'Noticias'],[/discovery|history|animal|food|hgtv|science|gourmet|cocina|investigation|crime|\bh2\b/i,'Documentales'],[/radio|music|mtv|m[uú]sica|vevo/i,'Música']];
+const CC=[[/^(AR|ARG)\b/,'Argentina'],[/^(CL|CHI)\b/,'Chile'],[/^CO\b/,'Colombia'],[/^CR\b/,'Costa Rica'],[/^EC\b/,'Ecuador'],[/^(GUA|GT)\b/,'Guatemala'],[/^HN\b/,'Honduras'],[/^(BOL)\b/,'Bolivia'],[/^MX\b|\(MX\)/,'México'],[/^CA\b|- CA\b/,'Canadá']];
+function tvCat(n){for(const[r,c]of TOP)if(r.test(n))return c;for(const[r,c]of CC)if(r.test(n))return c;return'General'}
+function enrich(m){const n=m.n,was=H24.test(n),e=n.match(EP1)||n.match(EP2);
+if(e){m.t=e[1].trim()||n;m.s=+e[2];m.e=+e[3]}
+if(was)m.n=n.replace(H24,'').replace(/^[\s\-–]+/,'')||n;
+const gen=/^(canales? en vivo|live|tv)?$/i.test((m.g||'').trim());
+m.c=!gen?m.g:m.k==='tv'?tvCat(n):was?(m.k==='movie'?'Películas 24/7':'Series 24/7'):(m.k==='movie'?'Películas':'Series')}/*E*/
 function parse(t){const o=[],L=t.split(/\r?\n/);let m=null;
 for(const l of L){if(l.startsWith('#EXTINF')){const a=k=>(l.match(new RegExp(k+'="([^"]*)"'))||[])[1]||'';
-m={n:l.slice(l.lastIndexOf(',')+1).trim()||a('tvg-name'),i:a('tvg-logo'),g:a('group-title')};m.k=kind(m.g+' '+m.n.slice(0,0))}
-else if(m&&/^(https?|rtmp|rtsp):/i.test(l.trim())){m.u=l.trim();o.push(m);m=null}}return o}
+m={n:l.slice(l.lastIndexOf(',')+1).trim()||a('tvg-name'),i:a('tvg-logo'),g:a('group-title')};m.k=''}
+else if(m&&/^(https?|rtmp|rtsp):/i.test(l.trim())){m.u=l.trim();m.k=kind(m.g,m.n,m.u);enrich(m);if(!ADULT.test(m.n))o.push(m);m=null}}return o}
 async function load(){try{let r=await fetch(LIST);all=parse(await r.text());localStorage.setItem('cm',JSON.stringify(all.slice(0,4000)))}
 catch(e){try{all=JSON.parse(localStorage.getItem('cm')||'[]')}catch(_){}}
-$('#msg').textContent=all.length?'':'No se pudo cargar la lista.';render()}
-function render(){const q=$('#q').value.toLowerCase();cur=all.filter(x=>x.k===tab&&(!q||x.n.toLowerCase().includes(q)));shown=0;grid.innerHTML='';more()}
+$('#msg').textContent=all.length?'':'No se pudo cargar la lista.';fillCats();render()}
+/*I*/const TMDB_KEY='';let TK=localStorage.getItem('tmdb')||TMDB_KEY;
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\(\[].*?[\)\]]/g,' ').replace(/\b(fhd|uhd|hd|sd|4k|op\s?\d|opc\.?\s?\d|\d{3,4}p)\b/g,' ').replace(/^(ar|arg|cl|chi|co|cr|ec|gua|gt|hn|bol|mx|ca|us|br|dep|deportes|cine)\s+/,'').replace(/[^a-z0-9]+/g,' ').trim();
+const clean=s=>s.replace(/[\(\[].*?[\)\]]/g,' ').replace(/\b(19|20)\d{2}\b/g,' ').replace(/\b(fhd|hd|sd|4k|latino|castellano|dual)\b/gi,' ').replace(/\s+(temporadas?|temp\.?|t)?\s*\d{1,2}(\s*(-|al|a)\s*\d{1,2})?\s*$/i,' ').replace(/\s+/g,' ').trim();
+let LC={};try{LC=JSON.parse(localStorage.getItem('cmimg')||'{}')}catch(_){}
+let sv=0;const save=()=>{clearTimeout(sv);sv=setTimeout(()=>{try{localStorage.setItem('cmimg',JSON.stringify(LC))}catch(_){LC={}}},1500)};
+const ph=n=>{let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))%360;const t=n.replace(/[^\p{L}\p{N} ]/gu,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'CM';
+return'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="hsl('+h+',45%,22%)"/><text x="50" y="62" font-size="38" font-family="sans-serif" font-weight="700" text-anchor="middle" fill="#f5b335">'+t+'</text></svg>')};
+let LG=null;const logos=()=>LG||(LG=(async()=>{try{const[c,l]=await Promise.all([fetch('https://iptv-org.github.io/api/channels.json').then(r=>r.json()),fetch('https://iptv-org.github.io/api/logos.json').then(r=>r.json())]);
+const by={};l.forEach(x=>{if(!by[x.channel])by[x.channel]=x.url});const M=new Map();
+c.forEach(ch=>{const u=by[ch.id];if(!u)return;[ch.name,...(ch.alt_names||[])].forEach(n=>{const k=norm(n);if(k&&!M.has(k))M.set(k,u)})});return M}catch(e){LG=null;return new Map()}})());
+let act=0;const Q=[];const pump=()=>{while(act<3&&Q.length){act++;Q.shift()().finally(()=>{act--;pump()})}};
+const queue=f=>new Promise(r=>{Q.push(()=>f().then(r,()=>r('')));pump()});
+async function art(x){if(x.i)return x.i;const tv=x.k==='tv',t=tv?x.n:clean(x.t||x.n);if(!t)return'';const key=x.k+'|'+norm(t);if(key in LC)return LC[key];
+let u='';
+if(tv){const M=await logos();u=M.get(norm(t))||''}
+else if(TK){u=await queue(async()=>{const r=await fetch('https://api.themoviedb.org/3/search/'+(x.k==='series'?'tv':'movie')+'?api_key='+encodeURIComponent(TK)+'&language=es-ES&query='+encodeURIComponent(t));
+if(!r.ok)return'';const j=await r.json(),p=j.results&&j.results.find(z=>z.poster_path);return p?'https://image.tmdb.org/t/p/w185'+p.poster_path:''});}
+else return'';
+LC[key]=u;save();return u}
+const IO=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;IO.unobserve(e.target);const b=e.target,im=b.firstChild;
+art(b._x).then(u=>{if(u){im.onerror=()=>{im.onerror=null;im.src=ph(b._x.t||b._x.n)};im.src=u}})}),{rootMargin:'300px'});
+/*E2*/
+let ser=null;
+function fillCats(){const s=$('#gr'),M=new Map();all.forEach(x=>{if(x.k===tab)M.set(x.c,(M.get(x.c)||0)+1)});s.innerHTML='';
+const o=document.createElement('option');o.value='';o.textContent='Todas las categorías';s.appendChild(o);
+[...M].sort((a,b)=>a[0].localeCompare(b[0],'es')).forEach(([c,n])=>{const p=document.createElement('option');p.value=c;p.textContent=c+' ('+n+')';s.appendChild(p)})}
+function render(){const q=$('#q').value.toLowerCase(),g=$('#gr').value;let L;
+if(ser){L=ser.eps}else{L=all.filter(x=>x.k===tab&&(!g||x.c===g)&&(!q||x.n.toLowerCase().includes(q)));
+if(tab==='series'){const M=new Map();L.forEach(x=>{if(x.t){let e=M.get(x.t);if(!e){e={n:x.t,i:x.i,eps:[]};M.set(x.t,e)}e.eps.push(x)}else M.set(x.n+x.u,x)});L=[...M.values()];L.forEach(e=>e.eps&&e.eps.sort((a,b)=>a.s-b.s||a.e-b.e))}
+L.sort((a,b)=>a.n.localeCompare(b.n,'es',{numeric:true}))}
+$('#sb').hidden=!ser;if(ser)$('#sb').textContent='← '+ser.n+' ('+ser.eps.length+' episodios)';
+cur=L;shown=0;grid.innerHTML='';more();if(!L.length)$('#msg').textContent='Sin resultados en esta sección.';else if(all.length)$('#msg').textContent=''}
+function openSer(x){ser=x;render();scrollTo(0,0)}
 function more(){const f=document.createDocumentFragment();cur.slice(shown,shown+PAGE).forEach(x=>{const b=document.createElement('button');b.className='c';
-b.innerHTML='<img loading="lazy" decoding="async" alt=""><span></span>';b.lastChild.textContent=x.n;const im=b.firstChild;im.src=x.i||'icons/icon.svg';im.onerror=()=>{im.onerror=null;im.src='icons/icon.svg'};
-b.onclick=()=>play(x);f.appendChild(b)});shown+=PAGE;grid.appendChild(f);$('#more').hidden=shown>=cur.length}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelector('nav .on').classList.remove('on');b.classList.add('on');tab=b.dataset.k;render()});
-$('#q').oninput=render;$('#more').onclick=more;
+b.innerHTML='<img loading="lazy" decoding="async" alt=""><span></span>';b.lastChild.textContent=x.eps?x.n+' ('+x.eps.length+')':(x.s?'T'+x.s+' E'+x.e+' · ':'')+x.n;b._x=x;b.firstChild.src=ph(x.t||x.n);IO.observe(b);
+b.onclick=()=>x.eps?openSer(x):play(x);f.appendChild(b)});shown+=PAGE;grid.appendChild(f);$('#more').hidden=shown>=cur.length}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelector('nav .on').classList.remove('on');b.classList.add('on');tab=b.dataset.k;ser=null;$('#q').value='';fillCats();render()});
+$('#q').oninput=()=>{ser=null;render()};$('#gr').onchange=()=>{ser=null;render()};$('#ky').onclick=()=>{const k=prompt('Clave API de TMDB (themoviedb.org/settings/api) para carátulas de películas y series:',TK);if(k===null)return;TK=k.trim();localStorage.setItem('tmdb',TK);Object.keys(LC).forEach(a=>{if(!LC[a])delete LC[a]});render()};$('#sb').onclick=()=>{ser=null;render()};$('#more').onclick=more;
 const V=$('#v'),ENG=['auto','hls.js','mpegts.js','nativo'];
 function kill(){if(eng){try{eng.destroy()}catch(_){}eng=null}V.removeAttribute('src');V.load()}
-function start(){kill();const u=item.u,e=ENG[engI];$('#en').textContent='Motor: '+e;
+let nr=0;function start(){nr=0;kill();const u=item.u,e=ENG[engI];$('#en').textContent='Motor: '+e;
 const isH=/\.m3u8|\/hls|type=m3u8/i.test(u),isT=/\.ts($|\?)|:\d+\/[^.]*$/i.test(u)&&!isH;
 const pick=e!=='auto'?e:isH?'hls.js':isT?'mpegts.js':'nativo';
 try{if(pick==='hls.js'&&window.Hls&&Hls.isSupported()){eng=new Hls({lowLatencyMode:false,maxBufferLength:20,enableWorker:true});eng.loadSource(u);eng.attachMedia(V);
-eng.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){d.type===Hls.ErrorTypes.NETWORK_ERROR?eng.startLoad():next()}})}
+eng.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){d.type===Hls.ErrorTypes.NETWORK_ERROR&&nr++<2?eng.startLoad():next()}})}
 else if(pick==='mpegts.js'&&window.mpegts&&mpegts.isSupported()){eng=mpegts.createPlayer({type:'mpegts',isLive:item.k==='tv',url:u},{enableStashBuffer:false});eng.attachMediaElement(V);eng.load();eng.on(mpegts.Events.ERROR,next)}
 else V.src=u;V.play().catch(()=>{})}catch(_){next()}}
-function next(){engI=(engI+1)%ENG.length;if(engI===0)return;start()}
-function play(x){item=x;engI=0;$('#nm').textContent=x.n;$('#pl').style.display='block';start();$('#bk').focus()}
-function stop(){kill();$('#pl').style.display='none'}
-$('#bk').onclick=stop;$('#en').onclick=()=>{engI=(engI+1)%ENG.length;start()};V.onerror=()=>{if(engI===0)next()};
+function next(){engI=(engI+1)%ENG.length;if(engI===0){$('#er').textContent='No se pudo reproducir este canal (servidor caído o bloqueado). Prueba otro.';return}start()}
+let lastEl=null;
+function play(x){lastEl=document.activeElement;item=x;engI=0;$('#nm').textContent=x.n;$('#er').textContent='';$('#pl').style.display='block';history.pushState({p:1},'');start();$('#bk').focus()}
+function stop(pop){kill();$('#pl').style.display='none';if(lastEl&&document.contains(lastEl))lastEl.focus();if(pop!==true&&history.state&&history.state.p)history.back()}
+addEventListener('popstate',()=>{if($('#pl').style.display==='block')stop(true)});
+$('#bk').onclick=()=>stop();$('#en').onclick=()=>{engI=(engI+1)%ENG.length;start()};V.onerror=()=>{if(V.currentSrc||eng)next()};V.onplaying=()=>{$('#er').textContent=''};
 addEventListener('keydown',e=>{const k=e.key;
 if(['Escape','Backspace','GoBack','BrowserBack'].includes(k)&&$('#pl').style.display==='block'&&document.activeElement.tagName!=='INPUT'){e.preventDefault();return stop()}
 if($('#pl').style.display==='block'){if(k==='MediaPlayPause')V.paused?V.play():V.pause();return}
 const d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[k];if(!d)return;
-const els=[...document.querySelectorAll('nav button,input,.c,.more:not([hidden])')],a=document.activeElement,r=a.getBoundingClientRect?a.getBoundingClientRect():null;
+const els=[...document.querySelectorAll('nav button,#ky,input,select,.c,.more:not([hidden])')],a=document.activeElement,r=a.getBoundingClientRect?a.getBoundingClientRect():null;
 if(!els.includes(a)){els[0].focus();return e.preventDefault()}
 const cx=r.left+r.width/2,cy=r.top+r.height/2;let best=null,bs=1e9;
 for(const el of els){if(el===a)continue;const q=el.getBoundingClientRect(),dx=q.left+q.width/2-cx,dy=q.top+q.height/2-cy;
 if(d[0]?dx*d[0]<=4:dy*d[1]<=4)continue;const s=d[0]?Math.abs(dx)+Math.abs(dy)*3:Math.abs(dy)+Math.abs(dx)*3;if(s<bs){bs=s;best=el}}
 if(best){e.preventDefault();best.focus();best.scrollIntoView({block:'center'})}});
-setTimeout(()=>{$('#splash').classList.add('out');setTimeout(()=>$('#splash').remove(),700);document.querySelector('nav .on').focus()},2800);
+setTimeout(()=>{$('#splash').classList.add('out');setTimeout(()=>$('#splash').remove(),700);if(document.activeElement===document.body)document.querySelector('nav .on').focus()},2800);
 load();if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
 </script></body></html>
